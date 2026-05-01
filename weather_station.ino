@@ -1,16 +1,47 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #include "secrets.h"
+
+
+const int buttonMenuPin = 18;
+bool lastButtonState = HIGH;
+
+#define SCREEN_WIDTH 128 
+#define SCREEN_HEIGHT 64
+#define MAX_STATES 4
+enum Infos {TEMPERATURE, HUMIDITY, CLOUDS, VISIBILITY};
+enum Infos state = TEMPERATURE;
 
 unsigned long lastTime = 0;
 unsigned long timerDelay = 10000;
 
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 String jsonBuffer;
+
+void displayText(const char* text){
+  display.clearDisplay();
+  display.setTextSize(1);      
+  display.setTextColor(WHITE);
+
+  display.setCursor((display.width()/2) - ((strlen(text)*6)/2), 30);
+  display.println(text);
+  display.display();
+}
 
 void setup() {
   Serial.begin(115200);
+  pinMode(buttonMenuPin, INPUT_PULLUP);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;);
+  }
+  display.clearDisplay();
+  display.display();
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.println("Connecting");
@@ -26,9 +57,26 @@ void setup() {
 }
 
 void loop() {
-  // Send an HTTP GET request
+  int buttonState = digitalRead(buttonMenuPin);
+  const char* currentText = "";
+  switch(state) {
+    case TEMPERATURE:     currentText = "TEMPERATURE";     break;
+    case HUMIDITY:    currentText = "HUMIDITY";    break;
+    case CLOUDS: currentText = "CLOUDS"; break;
+    case VISIBILITY:    currentText = "VISIBILITY";    break;
+  }
+
+  displayText(currentText);
+
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    state = static_cast<Infos>((static_cast<int>(state) + 1) % MAX_STATES);
+    delay(100);
+    
+  }
+  lastButtonState = buttonState;
+
+
   if ((millis() - lastTime) > timerDelay) {
-    // Check WiFi connection status
     if(WiFi.status()== WL_CONNECTED){
       String serverPath = String("http://api.openweathermap.org/data/2.5/weather?q=Paris,FR&APPID=") + OPENWEATHER_API_KEY;
       
@@ -36,7 +84,6 @@ void loop() {
       Serial.println(jsonBuffer);
       JSONVar myObject = JSON.parse(jsonBuffer);
   
-      // JSON.typeof(jsonVar) can be used to get the type of the var
       if (JSON.typeof(myObject) == "undefined") {
         Serial.println("Parsing input failed!");
         return;
@@ -52,16 +99,16 @@ void loop() {
     }
     lastTime = millis();
   }
+  
+  delay(50);
 }
 
 String httpGETRequest(const char* serverName) {
   WiFiClient client;
   HTTPClient http;
     
-  // Your Domain name with URL path or IP address with path
   http.begin(client, serverName);
   
-  // Send HTTP POST request
   int httpResponseCode = http.GET();
   
   String payload = "{}"; 
@@ -75,7 +122,6 @@ String httpGETRequest(const char* serverName) {
     Serial.print("Error code: ");
     Serial.println(httpResponseCode);
   }
-  // Free resources
   http.end();
 
   return payload;
