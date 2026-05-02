@@ -20,7 +20,9 @@ enum Infos { TEMPERATURE,
              CLOUDS,
              VISIBILITY };
 enum Infos stateMenu = TEMPERATURE;
+bool showValue = false;
 String tempStr, humStr, cldStr, visStr;
+int tempInt;
 
 unsigned long lastTime = 0;
 unsigned long timerDelay = 10000;
@@ -67,33 +69,60 @@ void setup() {
 void loop() {
   int buttonMenuState = digitalRead(buttonMenuPin);
   int buttonShowState = digitalRead(buttonShowPin);
-  switch (stateMenu) {
-    case TEMPERATURE:
-      displayText(tempStr.c_str());
-      break;
-    case HUMIDITY:
-      displayText(humStr.c_str());
-      break;
 
-    case CLOUDS:
-      displayText(cldStr.c_str());
-      break;
-
-    case VISIBILITY:
-      displayText(visStr.c_str());
-      break;
-  }
   if (buttonMenuState == LOW && lastButtonMenuState == HIGH) {
     stateMenu = static_cast<Infos>((static_cast<int>(stateMenu) + 1) % MAX_STATES);
+    showValue = false;
     delay(100);
   }
   lastButtonMenuState = buttonMenuState;
+
+  if (buttonShowState == LOW && lastButtonShowState == HIGH) {
+    showValue = !showValue;
+    delay(100);
+  }
+  lastButtonShowState = buttonShowState;
+
+  switch (stateMenu) {
+    case TEMPERATURE:
+      if (showValue) {
+        displayText(tempStr.c_str());
+      } else {
+        displayText("TEMPERATURE →");
+      }
+
+      break;
+    case HUMIDITY:
+      if (showValue) {
+        displayText(humStr.c_str());
+      } else {
+        displayText("HUMIDITY →");
+      }
+      break;
+
+    case CLOUDS:
+      if (showValue) {
+        displayText(cldStr.c_str());
+      } else {
+        displayText("CLOUDS →");
+      }
+      break;
+
+    case VISIBILITY:
+      if (showValue) {
+        displayText(visStr.c_str());
+      } else {
+        displayText("VISIBILITY →");
+      }
+     
+      break;
+  }
 
   if ((millis() - lastTime) > timerDelay) {
     lastTime = millis();
 
     if (WiFi.status() == WL_CONNECTED) {
-      String serverPath = String("http://api.openweathermap.org/data/2.5/weather?q=Paris,FR&APPID=") + OPENWEATHER_API_KEY;
+      String serverPath = String("http://api.openweathermap.org/data/2.5/weather?q=") + CITY + String(",") + COUNTRY + String("&APPID=") + OPENWEATHER_API_KEY;
 
       jsonBuffer = httpGETRequest(serverPath.c_str());
       Serial.println(jsonBuffer);
@@ -105,10 +134,11 @@ void loop() {
         Serial.print("Temperature = ");
         Serial.println(myObject["main"]["temp"]);
 
-        tempStr = JSON.stringify(myObject["main"]["temp"]);
+        tempInt = (int)myObject["main"]["temp"];
+        tempStr = (tempInt - 273);
         humStr = JSON.stringify(myObject["main"]["humidity"]);
-        cldStr = JSON.stringify(myObject["visibility"]);
-        visStr = JSON.stringify(myObject["clouds"]["all"]);
+        visStr = JSON.stringify(myObject["visibility"]);
+        cldStr = JSON.stringify(myObject["clouds"]["all"]);
 
       } else {
         Serial.println("Parsing input failed!");
