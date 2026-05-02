@@ -26,6 +26,24 @@ The current sketch:
 - `secret.h.example`: template you can copy to create your local `secrets.h`;
 - `.gitignore`: ignores `secrets.h` so your credentials stay local.
 
+## Wiring
+
+This project currently uses an ESP32, an OLED display, and two push buttons.
+
+![Wiring overview](Wiring.png)
+
+![ESP32 wiring details](ESP_Wiring.png)
+
+Current wiring logic based on the sketch:
+
+- button on GPIO 18 is used to change the displayed metric;
+- button on GPIO 19 is used to toggle between the title and the value;
+- the OLED display is initialized on I2C with address `0x3C`;
+- the display must be powered correctly and share the same ground as the ESP32;
+- the buttons are configured with `INPUT_PULLUP`, so they should be wired to ground when pressed.
+
+If your wiring does not match the images, update the GPIOs in `weather_station.ino` to match your board connections.
+
 ## Setup
 
 1. Open the `weather_station` folder in the Arduino IDE.
