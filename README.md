@@ -57,9 +57,11 @@ Example `secrets.h` content:
 ```cpp
 #pragma once
 
-const char* WIFI_SSID = "your_wifi_ssid";
-const char* WIFI_PASSWORD = "your_wifi_password";
-const char* OPENWEATHER_API_KEY = "your_openweather_api_key";
+const char* WIFI_SSID = "YOUR_WIFI_SSID";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* OPENWEATHER_API_KEY = "YOUR_OPENWEATHER_API_KEY";
+const char* CITY = "YOUR_CITY";
+const char* COUNTRY = "YOUR_COUNTRY";
 ```
 
 ## Serial Monitor
